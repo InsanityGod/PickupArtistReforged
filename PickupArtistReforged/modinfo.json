@@ -1,0 +1,16 @@
+{
+  "type": "code",
+  "modid": "pickupartistreforged",
+  "name": "PickupArtist Reforged",
+  "authors": [
+    "TheInsanityGod"
+  ],
+  "Contributors": [
+    "Mass8326"
+  ],
+  "description": "Tweaks to make picking up and transferring items faster and easier",
+  "version": "1.0.0",
+  "dependencies": {
+    "game": ""
+  }
+}

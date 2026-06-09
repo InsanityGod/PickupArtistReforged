@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PickupArtistReforged/PickupArtistReforged.csproj" />
+  <Project Path="ZZCakeBuild/CakeBuild.csproj" />
+</Solution>
