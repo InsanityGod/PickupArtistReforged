@@ -10,8 +10,6 @@ using Vintagestory.GameContent;
 
 namespace PickupArtistReforged.Code.Patches;
 
-//TODO we need to replace the CreateStorage method here to avoid bad stuff
-
 [HarmonyPatch]
 static class BlockEntityGroundStoragePatches
 {
