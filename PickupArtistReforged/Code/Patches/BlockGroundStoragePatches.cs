@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using Vintagestory.API.Common;
-using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
 namespace PickupArtistReforged.Code.Patches;
