@@ -4,7 +4,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 
 namespace PickupArtistReforged.Code;
-//TODO crates
 public static class PickupUtil
 {
 
