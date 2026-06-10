@@ -46,9 +46,23 @@ static class BlockEntityGroundStoragePatches
 
         if(groundStorage.StorageProps.CtrlKey && !player.Entity.Controls.CtrlKey) return new DummySlot();
 
-        return player.Entity.Controls.Sneak
-            ? PickupUtil.GetBestSlotForDropoff(activeSlot, player, target.Itemstack)
-            : PickupUtil.GetBestSlotForPickup(activeSlot, player, target.Itemstack);
+        if (player.Entity.Controls.ShiftKey)
+        {
+            if (activeSlot.Itemstack?.Collectible is ItemDryGrass)
+            {
+                var itemstack = groundStorage.Inventory[0].Itemstack;
+                if(itemstack?.Collectible?.GetCombustibleProperties(player.Entity.World, itemstack, groundStorage.Pos) is { SmeltingType: EnumSmeltType.Fire })
+                {
+                    return activeSlot;
+                }
+            }
+
+            return PickupUtil.GetBestSlotForDropoff(activeSlot, player, target.Itemstack);
+        }
+        else
+        {
+            return PickupUtil.GetBestSlotForPickup(activeSlot, player, target.Itemstack);
+        }
     }
 
     [HarmonyPatch(typeof(BlockEntityGroundStorage), nameof(BlockEntityGroundStorage.TryPutItem))]
@@ -128,7 +142,7 @@ static class BlockEntityGroundStoragePatches
         return matcher.InstructionEnumeration();
     }
 
-    static ItemSlot GetBestInteractionSlot_putOrGetItemStacking(ItemSlot activeSlot, IPlayer player, BlockEntityGroundStorage groundStorage) => player.Entity.Controls.Sneak
+    static ItemSlot GetBestInteractionSlot_putOrGetItemStacking(ItemSlot activeSlot, IPlayer player, BlockEntityGroundStorage groundStorage) => player.Entity.Controls.ShiftKey
             ? PickupUtil.GetBestSlotForDropoff(activeSlot, player, groundStorage.Inventory[0].Itemstack)
             : PickupUtil.GetBestSlotForPickup(activeSlot, player, groundStorage.Inventory[0].Itemstack);
 
@@ -170,9 +184,9 @@ static class BlockEntityGroundStoragePatches
 
             ItemSlot invSlot = beg.Inventory[0];
             bool putBulk = player.Entity.Controls.CtrlKey;
+            beg.DetermineStorageProperties(targetSlot);
 			if (targetSlot.TryPutInto(world, invSlot, putBulk ? beg.BulkTransferQuantity : beg.TransferQuantity) > 0)
 			{
-                beg.DetermineStorageProperties(targetSlot);
 				world.PlaySoundAt(behavior.StorageProps.PlaceRemoveSound.WithPathPrefixOnce("sounds/"), (double)pos.X + 0.5, (double)pos.InternalY, (double)pos.Z + 0.5, null, 0.88f + (float)world.Rand.NextDouble() * 0.24f, 16f, 1f);
 				beg.LightUpdate(invSlot.Itemstack);
 			}
