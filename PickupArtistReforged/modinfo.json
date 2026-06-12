@@ -9,7 +9,7 @@
     "Mass8326"
   ],
   "description": "Tweaks to make picking up and transferring items faster and easier",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "dependencies": {
     "game": ""
   }

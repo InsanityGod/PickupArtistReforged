@@ -42,9 +42,15 @@ static class BlockEntityGroundStoragePatches
 
     static ItemSlot GetBestInteractionSlot(ItemSlot activeSlot, IPlayer player, ItemSlot target, BlockEntityGroundStorage groundStorage)
     {
-        if(groundStorage is not { StorageProps.Layout: EnumGroundStorageLayout.Stacking or EnumGroundStorageLayout.Messy12 } || groundStorage.Inventory.Empty) return activeSlot;
+        if(groundStorage?.StorageProps is null || groundStorage.Inventory.Empty) return activeSlot;
 
-        if(groundStorage.StorageProps.CtrlKey && !player.Entity.Controls.CtrlKey) return new DummySlot();
+        if(groundStorage is not { StorageProps.Layout: EnumGroundStorageLayout.Stacking or EnumGroundStorageLayout.Messy12 })
+        {
+            if(activeSlot.Empty || player.Entity.Controls.ShiftKey) return activeSlot;
+            return new DummySlot();
+        }
+
+        if (groundStorage.StorageProps.CtrlKey && !player.Entity.Controls.CtrlKey) return new DummySlot();
 
         if (player.Entity.Controls.ShiftKey)
         {
@@ -85,6 +91,49 @@ static class BlockEntityGroundStoragePatches
     }
 
     static ItemSlot GetBestDropoffSlot(ItemSlot activeSlot, IPlayer player, BlockEntityGroundStorage groundStorage) => PickupUtil.GetBestSlotForDropoff(activeSlot, player, groundStorage.Inventory[0].Itemstack);
+
+    [HarmonyPatch(typeof(BlockEntityGroundStorage), nameof(BlockEntityGroundStorage.putOrGetItemSingle))]
+    [HarmonyTranspiler]
+    static IEnumerable<CodeInstruction> SetPriotizedSlot_putOrGetItemSingle(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var matcher = new CodeMatcher(instructions, generator);
+
+        matcher.MatchStartForward(
+            CodeMatch.Calls(AccessTools.PropertyGetter(typeof(IPlayerInventoryManager), nameof(IPlayerInventoryManager.ActiveHotbarSlot)))
+        );
+
+        matcher.InsertAfterAndAdvance(
+            CodeInstruction.LoadArgument(2), // player
+            CodeInstruction.LoadArgument(1), // outSlot
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BlockEntityGroundStoragePatches), nameof(GetBestPutOrGetItemSingleSlot)))
+        );
+
+        matcher.MatchStartForward(
+            CodeMatch.Calls(AccessTools.Method(typeof(IPlayerInventoryManager), nameof(IPlayerInventoryManager.TryGiveItemstack))
+        ));
+
+        matcher.RemoveInstruction();
+
+         matcher.Insert(
+            CodeInstruction.LoadLocal(0),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PickupUtil), nameof(PickupUtil.TryGiveItemStack)))
+        );
+
+        matcher.MatchEndBackwards(
+            CodeMatch.Calls(AccessTools.PropertyGetter(typeof(IPlayer), nameof(IPlayer.InventoryManager)))
+        );
+
+        matcher.RemoveInstruction();
+
+        return matcher.InstructionEnumeration();
+    }
+
+    static ItemSlot GetBestPutOrGetItemSingleSlot(ItemSlot activeSlot, IPlayer player, ItemSlot ourSlot)
+    {
+        if(ourSlot.Empty || player.Entity.Controls.ShiftKey) return activeSlot;
+
+        return PickupUtil.GetBestSlotForPickup(activeSlot, player, ourSlot.Itemstack);
+    }
 
     [HarmonyPatch(typeof(BlockEntityGroundStorage), nameof(BlockEntityGroundStorage.TryTakeItem))]
     [HarmonyTranspiler]
