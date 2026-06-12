@@ -8,6 +8,7 @@ using Vintagestory.GameContent;
 namespace PickupArtistReforged.Code.Patches;
 
 [HarmonyPatch]
+[HarmonyPatchCategory("ModOnServer")]
 static class BlockEntityItemPilePatches
 {
     [HarmonyPatch(typeof(BlockEntityItemPile), nameof(BlockEntityItemPile.OnPlayerInteract))]

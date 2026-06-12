@@ -10,6 +10,7 @@ using Vintagestory.GameContent;
 namespace PickupArtistReforged.Code.Patches;
 
 [HarmonyPatch]
+[HarmonyPatchCategory("ModOnServer")]
 static class BlockEntityGroundStoragePatches
 {
     [HarmonyPatch(typeof(BlockEntityGroundStorage), nameof(BlockEntityGroundStorage.OnPlayerInteractStart))]
