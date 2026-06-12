@@ -7,6 +7,7 @@ using Vintagestory.GameContent;
 namespace PickupArtistReforged.Code.Patches;
 
 [HarmonyPatch]
+[HarmonyPatchCategory("ModOnServer")]
 static class BlockTorchHolderRackPatches
 {
     [HarmonyPatch(typeof(BlockTorchHolder), nameof(BlockTorchHolder.OnBlockInteractStart))]
