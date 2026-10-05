@@ -20,6 +20,7 @@ static class BlockBehaviorRightClickPickupPatches
         );
 
         matcher.InsertAfterAndAdvance(
+            CodeInstruction.LoadArgument(0), // this
             CodeInstruction.LoadArgument(2), // player
             CodeInstruction.LoadLocal(0), // dropStacks
             new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BlockBehaviorRightClickPickupPatches), nameof(GetBestSlot)))
@@ -45,9 +46,9 @@ static class BlockBehaviorRightClickPickupPatches
         return matcher.InstructionEnumeration();
     }
 
-    static ItemSlot GetBestSlot(ItemSlot activeSlot, IPlayer player, ItemStack[] target)
+    static ItemSlot GetBestSlot(ItemSlot activeSlot, BlockBehaviorRightClickPickup instance, IPlayer player, ItemStack[] target)
     {
-        if(target.Length < 1) return activeSlot;
+        if(target.Length < 1 || instance.block is BlockPie) return activeSlot;
         return PickupUtil.GetBestSlotForPickup(activeSlot, player, target[0]);
     }
 }
