@@ -1,0 +1,77 @@
+{
+  "Configuration": [
+    {
+      "ConfigFile": "PickupArtistReforged.json",
+      "ConfigLabel": "Pickup Artist Reforged Config",
+      "ConfigSide": "Client",
+      "Settings": [
+        {
+          "Type": "Advanced",
+          "Label": "Pickup Priorities",
+          "Map": "PickupPriorities",
+          "Advanced": {
+            "Type": "Array",
+            "Element": {
+              "Type": "Dropdown",
+              "Options": [
+                {
+                  "Label": "Hotbar Slot Closest To Being Filled",
+                  "Value": "HotbarSlotClosestToBeingFilled"
+                },
+                {
+                  "Label": "Active Hotbar Slot If Empty",
+                  "Value": "ActiveHotbarSlotIfEmpty"
+                },
+                {
+                  "Label": "Backpack Slot Closest To Being Filled",
+                  "Value": "BackpackSlotClosestToBeingFilled"
+                },
+                {
+                  "Label": "Best Suited Slot",
+                  "Value": "BestSuitedSlot"
+                },
+                {
+                  "Label": "Empty Backpack Slot",
+                  "Value": "EmptyBackpackSlot"
+                },
+                {
+                  "Label": "Empty Hotbar Slot",
+                  "Value": "EmptyHotbarSlot"
+                },
+                {
+                  "Label": "Hot Bar Slot If Tool",
+                  "Value": "HotBarSlotIfTool"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "Type": "Advanced",
+          "Label": "Dropoff Priorities",
+          "Map": "DropoffPriorities",
+          "Advanced": {
+            "Type": "Array",
+            "Element": {
+              "Type": "Dropdown",
+              "Options": [
+                {
+                  "Label": "Active Hotbar Slot If Matching",
+                  "Value": "ActiveHotbarSlotIfMatching"
+                },
+                {
+                  "Label": "Backpackslot Closest To Empty",
+                  "Value": "BackpackslotClosestToEmpty"
+                },
+                {
+                  "Label": "Hotbarslot Closest To Empty",
+                  "Value": "HotbarslotClosestToEmpty"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

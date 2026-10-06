@@ -1,64 +1,113 @@
-﻿using System;
+﻿using PickupArtistReforged.Config;
+using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
+using Vintagestory.API.Datastructures;
 
 namespace PickupArtistReforged.Code;
 public static class PickupUtil
 {
-
+    private static TagSet? ToolTag;
+    internal static void ClearToolTagCache() => ToolTag = default;
     public static ItemSlot GetBestSlotForPickup(ItemSlot activeSlot, IPlayer player, ItemStack? target)
     {
         if (target is null) return activeSlot;
-        // 1. Hotbar slot with existing stack closest to being full
+
+        if(!PickupArtistReforgedConfig.KnownRemoteConfigs.TryGetValue(player.PlayerUID, out var config))
+        {
+            player.Entity.Api.Logger.Warning("[pickupartistreforged] client config of player '{0}' is not known by the server, using server defaults", player.PlayerName);
+            config = PickupArtistReforgedConfig.LocalInstance!;
+        }
+        ToolTag ??= player.Entity.Api.CollectibleTagRegistry.CreateTagSet("tool");
+
         var hotbar = player.InventoryManager.GetHotbarInventory();
-        var bestSlot = GetClosestToFullItemSlot(hotbar, target);
-        if (bestSlot is not null) return bestSlot;
-
-        var dummySlot = new DummySlot(target);
-
-        // 2. Active hotbar slot if it has space
-        if (activeSlot is { Empty: true} && activeSlot.CanHold(dummySlot)) return activeSlot;
-
-        // 3. Backpack slot with existing stack closest to being full
         var backpack = player.InventoryManager.GetOwnInventory("backpack");
-        bestSlot = GetClosestToFullItemSlot(backpack, target);
-        if (bestSlot is not null) return bestSlot;
+        var dummySlot = new DummySlot(target);
+        ItemSlot? bestSlot;
 
-        // 4. Best Suited backpack slot
-        var bestWeightedSlot = backpack.GetBestSuitedSlot(dummySlot);
-        if (bestWeightedSlot?.slot is not null) return bestWeightedSlot.slot;
+        foreach(var pickupPriority in config.PickupPriorities)
+        {
+            switch (pickupPriority)
+            {
+                case PickupSlotPriority.HotbarSlotClosestToBeingFilled:
+                    bestSlot = GetClosestToFullItemSlot(hotbar, target);
+                    if (bestSlot is not null) return bestSlot;
+                    break;
 
-        // 5. Empty backpack slot
-        bestSlot = GetFirstEmptySlot(backpack, dummySlot);
-        if (bestSlot is not null) return bestSlot;
+                case PickupSlotPriority.ActiveHotbarSlotIfEmpty:
+                    if (activeSlot is { Empty: true } && activeSlot.CanHold(dummySlot)) return activeSlot;
+                    break;
 
-        // 6. Empty hotbar slot
-        bestSlot = GetFirstEmptySlot(hotbar, dummySlot);
-        if (bestSlot is not null) return bestSlot;
+                case PickupSlotPriority.BackpackSlotClosestToBeingFilled:
+                    bestSlot = GetClosestToFullItemSlot(backpack, target);
+                    if (bestSlot is not null) return bestSlot;
+                    break;
+
+                case PickupSlotPriority.BestSuitedSlot:
+                    var bestWeightedSlot = backpack.GetBestSuitedSlot(dummySlot);
+                    if (bestWeightedSlot?.slot is not null) return bestWeightedSlot.slot;
+                    break;
+
+                case PickupSlotPriority.EmptyBackpackSlot:
+                    bestSlot = GetFirstEmptySlot(backpack, dummySlot);
+                    if (bestSlot is not null) return bestSlot;
+                    break;
+
+                case PickupSlotPriority.EmptyHotbarSlot:
+                    bestSlot = GetFirstEmptySlot(hotbar, dummySlot);
+                    if (bestSlot is not null) return bestSlot;
+                    break;
+
+                case PickupSlotPriority.HotBarSlotIfTool:
+                    if(target.Collectible.Tool is null && !target.Collectible.GetTags(target).Overlaps(ToolTag.Value)) break;
+
+                    bestSlot = GetFirstEmptySlot(hotbar, dummySlot);
+                    if (bestSlot is not null) return bestSlot;
+                    break;
+            }
+        }
 
         return activeSlot;
     }
 
+    //TODO test
     public static ItemSlot GetBestSlotForDropoff(ItemSlot activeSlot, IPlayer player, ItemStack? target)
     {
         if (target is null) return activeSlot;
 
-        // 1. Active hotbar slot if it has matching item
-        if(!activeSlot.Empty && target.Collectible.Equals(activeSlot.Itemstack, target, GlobalConstants.IgnoredStackAttributes))
+        if(!PickupArtistReforgedConfig.KnownRemoteConfigs.TryGetValue(player.PlayerUID, out var config))
         {
-            return activeSlot;
+            player.Entity.Api.Logger.Warning("[pickupartistreforged] client config of player '{0}' is not known by the server, using server defaults", player.PlayerName);
+            config = PickupArtistReforgedConfig.LocalInstance!;
         }
-
-        // 2. Backpack slot with smallest partial stack
-        var backpack = player.InventoryManager.GetOwnInventory("backpack");
-        var bestSlot = GetSlotWithLeastItems(backpack, target);
-        if (bestSlot is not null) return bestSlot;
-
-        // 3. Hotbar slot with smallest partial stack
+        
         var hotbar = player.InventoryManager.GetHotbarInventory();
-        bestSlot = GetSlotWithLeastItems(hotbar, target);
-        if (bestSlot is not null) return bestSlot;
+        var backpack = player.InventoryManager.GetOwnInventory("backpack");
+        ItemSlot? bestSlot;
+
+        foreach(var pickupPriority in config.DropoffPriorities)
+        {
+            switch (pickupPriority)
+            {
+                case DropoffSlotPriority.ActiveHotbarSlotIfMatching:
+                    if (!activeSlot.Empty && target.Collectible.Equals(activeSlot.Itemstack, target, GlobalConstants.IgnoredStackAttributes))
+                    {
+                        return activeSlot;
+                    }
+                    break;
+
+                case DropoffSlotPriority.BackpackslotClosestToEmpty:
+                    bestSlot = GetSlotWithLeastItems(backpack, target);
+                    if (bestSlot is not null) return bestSlot;
+                    break;
+
+                case DropoffSlotPriority.HotbarslotClosestToEmpty:
+                    bestSlot = GetSlotWithLeastItems(hotbar, target);
+                    if (bestSlot is not null) return bestSlot;
+                    break;
+            }
+        }
 
         return activeSlot;
     }
